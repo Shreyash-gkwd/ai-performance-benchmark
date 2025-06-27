@@ -100,7 +100,7 @@ This project provides a comprehensive performance comparison between Python and 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yShreyash-gkwd/ai-performance-benchmark.git
+   git clone https://github.com/Shreyash-gkwd/ai-performance-benchmark.git
    cd ai-performance-benchmark
    ```
 
@@ -174,7 +174,6 @@ ai-performance-benchmark/
 │   ├── main.tsx                    # Entry point
 │   ├── index.css                   # Global styles
 │   └── vite-env.d.ts              # Vite types
-├── public/                         # Static assets
 ├── package.json                    # Dependencies
 ├── vite.config.ts                  # Vite configuration
 ├── tailwind.config.js              # Tailwind configuration
