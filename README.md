@@ -28,7 +28,6 @@
 - [🏗️ Project Structure](#️-project-structure)
 - [📊 Performance Metrics](#-performance-metrics)
 - [🎨 Interactive Demos](#-interactive-demos)
-- [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 
 ---
