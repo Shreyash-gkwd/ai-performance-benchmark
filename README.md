@@ -100,7 +100,7 @@ This project provides a comprehensive performance comparison between Python and 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-performance-benchmark.git
+   git clone https://github.com/yShreyash-gkwd/ai-performance-benchmark.git
    cd ai-performance-benchmark
    ```
 
@@ -221,33 +221,6 @@ The project includes fully functional TensorFlow.js demos that demonstrate:
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit your changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. **Push to the branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
-
-### Contribution Guidelines
-- Follow the existing code style
-- Add tests for new features
-- Update documentation as needed
-- Ensure all tests pass
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -262,13 +235,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Tailwind CSS** for the utility-first CSS framework
 
 ---
-
-<div align="center">
-
-**Made with ❤️ for the AI/ML community**
-
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/ai-performance-benchmark?style=social)](https://github.com/yourusername/ai-performance-benchmark)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/ai-performance-benchmark?style=social)](https://github.com/yourusername/ai-performance-benchmark)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/ai-performance-benchmark)](https://github.com/yourusername/ai-performance-benchmark/issues)
-
-</div> 
