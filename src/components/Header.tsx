@@ -8,7 +8,7 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-white/20 rounded-lg">
-              <Zap className="h-8 w-8" />
+              <img src="/logo.png" alt="AI Performance Hub Logo" className="h-8 w-8 object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">AI Performance Hub</h1>
