@@ -16,6 +16,7 @@ const InteractiveDemo: React.FC = () => {
   const [pythonResult, setPythonResult] = useState<PredictionResult | null>(null);
   const [jsResult, setJsResult] = useState<PredictionResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastPos, setLastPos] = useState<{ x: number; y: number } | null>(null);
   const [model, setModel] = useState<tf.LayersModel | null>(null);
 
   // Sample sentences for random generation
@@ -57,27 +58,6 @@ const InteractiveDemo: React.FC = () => {
     "Here are the available options."
   ];
 
-  // Load TensorFlow.js model for digit recognition
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        // In a real implementation, you'd load a pre-trained model
-        // For demo purposes, we'll create a simple model structure
-        const simpleModel = tf.sequential({
-          layers: [
-            tf.layers.flatten({ inputShape: [28, 28, 1] }),
-            tf.layers.dense({ units: 128, activation: 'relu' }),
-            tf.layers.dense({ units: 10, activation: 'softmax' })
-          ]
-        });
-        setModel(simpleModel);
-      } catch (error) {
-        console.error('Error loading model:', error);
-      }
-    };
-    loadModel();
-  }, []);
-
   const generateRandomSentence = () => {
     const randomIndex = Math.floor(Math.random() * sampleSentences.length);
     setSentimentText(sampleSentences[randomIndex]);
@@ -86,33 +66,63 @@ const InteractiveDemo: React.FC = () => {
     setJsResult(null);
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Unified function to get coordinates from mouse or touch event
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    let x = 0, y = 0;
+    if ('touches' in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    return { x, y };
+  };
+
+  // Start drawing (mouse or touch)
+  const handleStart = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     setIsDrawing(true);
-    draw(e);
+    const { x, y } = getCanvasCoords(e);
+    setLastPos({ x, y });
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
   };
 
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Draw (mouse or touch)
+  const handleDraw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current) return;
-
+    e.preventDefault();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const { x, y } = getCanvasCoords(e);
+    if (lastPos) {
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#001233';
+      ctx.beginPath();
+      ctx.moveTo(lastPos.x, lastPos.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+    setLastPos({ x, y });
+  };
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#001233';
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+  // Stop drawing (mouse or touch)
+  const handleStop = () => {
+    setIsDrawing(false);
+    setLastPos(null);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx) ctx.beginPath();
   };
 
   const clearCanvas = () => {
@@ -125,39 +135,101 @@ const InteractiveDemo: React.FC = () => {
     setJsResult(null);
   };
 
+  // Load the pre-trained MNIST model
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const loadedModel = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist/model.json');
+        setModel(loadedModel);
+      } catch (error) {
+        console.error('Error loading MNIST model:', error);
+      }
+    };
+    loadModel();
+  }, []);
+
+  // Preprocess canvas image for MNIST model
+  const preprocessCanvas = () => {
+    if (!canvasRef.current) return null;
+    const canvas = canvasRef.current;
+    // Create a temporary canvas to resize
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 28;
+    tempCanvas.height = 28;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return null;
+    // Draw the original canvas onto the temp canvas, resizing it
+    tempCtx.drawImage(canvas, 0, 0, 28, 28);
+    // Get image data and convert to grayscale
+    const imageData = tempCtx.getImageData(0, 0, 28, 28);
+    const data = imageData.data;
+    const grayscale = [];
+    for (let i = 0; i < data.length; i += 4) {
+      // Use the red channel (since the image is black/white)
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      // Invert color: model expects white digit on black background
+      grayscale.push((255 - avg) / 255);
+    }
+    // Convert to a tensor of shape [1, 28, 28, 1]
+    const tensor = tf.tensor4d(grayscale, [1, 28, 28, 1]);
+    return tensor;
+  };
+
   const simulateDigitRecognition = async () => {
     if (!canvasRef.current) return;
-    
     setIsProcessing(true);
-    
-    // Simulate Python processing (typically slower but more accurate)
+
+    // Use real model if loaded
+    if (model) {
+      const tensor = preprocessCanvas();
+      if (tensor) {
+        const jsStart = performance.now();
+        const prediction = (model.predict(tensor) as tf.Tensor);
+        const data = await prediction.data();
+        const jsEnd = performance.now();
+        const predDigit = data.indexOf(Math.max(...data));
+        const jsConfidence = Math.max(...data);
+        // Simulate Python result based on JS result
+        const pythonConfidence = Math.min(1, jsConfidence + 0.07 + Math.random() * 0.07); // slightly higher
+        const pythonProcessingTime = (jsEnd - jsStart) * (1.7 + Math.random() * 0.4); // slower
+        setJsResult({
+          prediction: predDigit,
+          confidence: jsConfidence,
+          processingTime: jsEnd - jsStart
+        });
+        setPythonResult({
+          prediction: predDigit,
+          confidence: pythonConfidence,
+          processingTime: pythonProcessingTime
+        });
+        tensor.dispose();
+        prediction.dispose && prediction.dispose();
+        setIsProcessing(false);
+        return;
+      }
+    }
+
+    // Fallback to simulation if model not loaded
     const pythonStart = performance.now();
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
     const pythonEnd = performance.now();
-    
     const pythonPrediction = Math.floor(Math.random() * 10);
     const pythonConfidence = 0.85 + Math.random() * 0.14;
-    
+    const jsStart = performance.now();
+    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
+    const jsEnd = performance.now();
+    const jsPrediction = pythonPrediction; // keep same for demo
+    const jsConfidence = 0.78 + Math.random() * 0.15;
     setPythonResult({
       prediction: pythonPrediction,
       confidence: pythonConfidence,
       processingTime: pythonEnd - pythonStart
     });
-
-    // Simulate JavaScript processing (typically faster but slightly less accurate)
-    const jsStart = performance.now();
-    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
-    const jsEnd = performance.now();
-    
-    const jsPrediction = Math.floor(Math.random() * 10);
-    const jsConfidence = 0.78 + Math.random() * 0.15;
-    
     setJsResult({
       prediction: jsPrediction,
       confidence: jsConfidence,
       processingTime: jsEnd - jsStart
     });
-
     setIsProcessing(false);
   };
 
@@ -348,10 +420,14 @@ const InteractiveDemo: React.FC = () => {
                       width={280}
                       height={280}
                       className="bg-white cursor-crosshair"
-                      onMouseDown={startDrawing}
-                      onMouseUp={stopDrawing}
-                      onMouseMove={draw}
-                      onMouseLeave={stopDrawing}
+                      onMouseDown={handleStart}
+                      onMouseMove={handleDraw}
+                      onMouseUp={handleStop}
+                      onMouseLeave={handleStop}
+                      onTouchStart={handleStart}
+                      onTouchMove={handleDraw}
+                      onTouchEnd={handleStop}
+                      onTouchCancel={handleStop}
                     />
                   </div>
                 </div>
