@@ -45,6 +45,16 @@ This project provides a comprehensive performance comparison between Python and 
 
 ---
 
+## ⚠️ Important Note: Demo Scope & Limitations
+
+This project is an **interactive demo and educational tool**. The digit recognition uses a real TensorFlow.js (JavaScript) model running in your browser. The "Python" result is simulated: it uses the same prediction as the JavaScript model, but with slightly tweaked confidence and timing to illustrate a comparison. 
+
+**No real Python code or model is run in the browser.**
+
+A true benchmark between Python and JavaScript would require a backend server running a real Python model (e.g., with Flask or FastAPI), and the frontend would send the user's drawing to the backend for a real Python prediction. This project demonstrates the concept and user experience, but is not a scientific benchmark.
+
+---
+
 ## ✨ Features
 
 ### 📊 Performance Benchmarks
