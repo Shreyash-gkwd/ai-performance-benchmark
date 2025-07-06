@@ -85,6 +85,7 @@ const InteractiveDemo: React.FC = () => {
   // Start drawing (mouse or touch)
   const handleStart = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDrawing(true);
     const { x, y } = getCanvasCoords(e);
     setLastPos({ x, y });
@@ -100,6 +101,7 @@ const InteractiveDemo: React.FC = () => {
   const handleDraw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current) return;
     e.preventDefault();
+    e.stopPropagation();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -146,6 +148,27 @@ const InteractiveDemo: React.FC = () => {
       }
     };
     loadModel();
+  }, []);
+
+  // Prevent scrolling on canvas touch events
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    // Add passive: false to ensure preventDefault works
+    canvas.addEventListener('touchstart', preventScroll, { passive: false });
+    canvas.addEventListener('touchmove', preventScroll, { passive: false });
+    canvas.addEventListener('touchend', preventScroll, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchstart', preventScroll);
+      canvas.removeEventListener('touchmove', preventScroll);
+      canvas.removeEventListener('touchend', preventScroll);
+    };
   }, []);
 
   // Preprocess canvas image for MNIST model
@@ -414,12 +437,13 @@ const InteractiveDemo: React.FC = () => {
                 <h3 className="text-2xl font-bold text-[#001233] mb-6 text-center">Draw a Digit (0-9)</h3>
                 
                 <div className="flex justify-center mb-6">
-                  <div className="border-4 border-[#001233] rounded-xl overflow-hidden">
+                  <div className="border-4 border-[#001233] rounded-xl overflow-hidden" style={{ touchAction: 'none' }}>
                     <canvas
                       ref={canvasRef}
                       width={280}
                       height={280}
                       className="bg-white cursor-crosshair"
+                      style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
                       onMouseDown={handleStart}
                       onMouseMove={handleDraw}
                       onMouseUp={handleStop}
