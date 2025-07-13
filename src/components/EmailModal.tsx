@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { X, Send, Mail } from 'lucide-react';
-import emailjs from '@emailjs/browser';
+import { toast } from 'react-toastify';
 
 interface EmailModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldlrbwe";
 
 const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -27,41 +29,21 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
-      // EmailJS configuration using environment variables
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-      const toEmail = import.meta.env.VITE_TO_EMAIL;
-
-      // Check if environment variables are set
-      if (!serviceId || !templateId || !publicKey || !toEmail) {
-        throw new Error('Email configuration is missing. Please check your environment variables.');
-      }
-
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
-      };
-
-      await emailjs.send(serviceId, templateId, templateParams, publicKey);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
       });
-      
-      alert('Email sent successfully!');
-      onClose();
+      if (response.ok) {
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        toast.success('Message sent successfully!');
+        onClose();
+      } else {
+        toast.error('Failed to send message. Please try again.');
+      }
     } catch (error) {
-      console.error('Email sending failed:', error);
-      alert('Failed to send email. Please try again.');
+      toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +60,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
             <div className="p-2 bg-blue-600/20 rounded-lg">
               <Mail className="h-5 w-5 text-blue-400" />
             </div>
-            <h2 className="text-xl font-semibold text-white">Send Email</h2>
+            <h2 className="text-xl font-semibold text-white">Contact Form</h2>
           </div>
           <button
             onClick={onClose}
@@ -89,7 +71,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 p-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-blue-200 mb-2">
               Your Name
@@ -105,7 +87,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
               placeholder="Enter your name"
             />
           </div>
-
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-blue-200 mb-2">
               Your Email
@@ -121,7 +102,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
               placeholder="Enter your email"
             />
           </div>
-
           <div>
             <label htmlFor="subject" className="block text-sm font-medium text-blue-200 mb-2">
               Subject
@@ -137,7 +117,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
               placeholder="Enter subject"
             />
           </div>
-
           <div>
             <label htmlFor="message" className="block text-sm font-medium text-blue-200 mb-2">
               Message
@@ -153,8 +132,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
               placeholder="Enter your message..."
             />
           </div>
-
-          <div className="flex space-x-3 pt-4">
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
               onClick={onClose}
@@ -175,7 +153,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
               ) : (
                 <>
                   <Send className="h-4 w-4" />
-                  <span>Send Email</span>
+                  <span>Send Message</span>
                 </>
               )}
             </button>
@@ -186,4 +164,4 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default EmailModal; 
+export default EmailModal;

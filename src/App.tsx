@@ -7,10 +7,13 @@ import CodeComparison from './components/CodeComparison';
 import InteractiveDemo from './components/InteractiveDemo';
 import UseCases from './components/UseCases';
 import Footer from './components/Footer';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
     <div className="min-h-screen">
+      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <Header />
       <Hero />
       <PerformanceChart />

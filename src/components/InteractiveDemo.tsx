@@ -141,7 +141,7 @@ const InteractiveDemo: React.FC = () => {
   useEffect(() => {
     const loadModel = async () => {
       try {
-        const loadedModel = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist/model.json');
+        const loadedModel = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-examples/mnist/data/mnist_model.json');
         setModel(loadedModel);
       } catch (error) {
         console.error('Error loading MNIST model:', error);
